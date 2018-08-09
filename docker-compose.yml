@@ -1,0 +1,38 @@
+version: '2.1'
+
+services:
+  postgres:
+    image: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  create_test_database:
+    image: postgres
+    command: psql -c 'create database flask_jwt_auth_test;' -U postgres -h postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+  web_prepare:
+    build: .
+    # command: python manage.py db init
+    command: python manage.py db init && python manage.py db migrate && python manage.py db upgrade
+    depends_on:
+      postgres:
+        condition: service_healthy
+      create_test_database:
+        condition: service_started
+  web:
+    build: .
+    # command: python3 manage.py runserver 0.0.0.0:8000
+    command: python3 manage.py test
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      web_prepare:
+        condition: service_started
