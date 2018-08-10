@@ -10,14 +10,14 @@ services:
       retries: 3
   create_test_database:
     image: postgres
-    command: psql -c 'create database flask_jwt_auth_test;' -U postgres -h postgres
+    command: psql -c 'create database flask_jwt_auth;' -U postgres -h postgres
     depends_on:
       postgres:
         condition: service_healthy
   web_prepare:
     build: .
     # command: python manage.py db init
-    command: python manage.py db init && python manage.py db migrate && python manage.py db upgrade
+    command: sh -c "python manage.py db init && python manage.py db migrate && python manage.py db upgrade"
     depends_on:
       postgres:
         condition: service_healthy
@@ -25,8 +25,8 @@ services:
         condition: service_started
   web:
     build: .
-    # command: python3 manage.py runserver 0.0.0.0:8000
-    command: python3 manage.py test
+    command: python3 manage.py runserver -h 0.0.0.0 -p 8000
+    # command: python3 manage.py test
     volumes:
       - .:/code
     ports:
